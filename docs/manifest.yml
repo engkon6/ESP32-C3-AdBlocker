@@ -4,11 +4,11 @@ builds:
   - name: esp32-c3
     chipFamily: ESP32-C3
     images:
-      - path: https://github.com/9M2PJU/ESP32-C3-AdBlocker/releases/latest/download/bootloader.bin
+      - path: https://github.com/engkon6/ESP32-C3-AdBlocker/releases/latest/download/bootloader.bin
         offset: 0x1000
-      - path: https://github.com/9M2PJU/ESP32-C3-AdBlocker/releases/latest/download/partitions.bin
+      - path: https://github.com/engkon6/ESP32-C3-AdBlocker/releases/latest/download/partitions.bin
         offset: 0x8000
-      - path: https://github.com/9M2PJU/ESP32-C3-AdBlocker/releases/latest/download/firmware.bin
+      - path: https://github.com/engkon6/ESP32-C3-AdBlocker/releases/latest/download/firmware.bin
         offset: 0x10000
-      - path: https://github.com/9M2PJU/ESP32-C3-AdBlocker/releases/latest/download/blocklist-fs.bin
+      - path: https://github.com/engkon6/ESP32-C3-AdBlocker/releases/latest/download/blocklist-fs.bin
         offset: 0x2b0000
