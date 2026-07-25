@@ -1,7 +1,7 @@
-# 9M2PJU-ESP32-C3-AdBlocker
+# ESP32-C3-AdBlocker
 
 <p align="center">
-  <img src="docs/banner.jpg" alt="9M2PJU ESP32-C3 AdBlocker" width="100%">
+  <img src="docs/banner.jpg" alt="ESP32-C3 AdBlocker" width="100%">
 </p>
 
 A **Pi-hole-style DNS ad-blocker** that runs on a **$2 ESP32-C3** — *no PSRAM required*.
@@ -147,7 +147,7 @@ There are three ways to install: **web flasher** (easiest, browser-only),
 
 ### Option A: Web flasher (recommended — no software install)
 
-1. Open **https://9m2pju.github.io/9M2PJU-ESP32-C3-AdBlocker/** in
+1. Open **https://9m2pju.github.io/ESP32-C3-AdBlocker/** in
    **Chrome or Edge** (Web Serial API required — Firefox/Safari not supported).
 2. Plug in your ESP32-C3 via USB.
 3. Click **CONNECT**, select your ESP32-C3's serial port.
@@ -161,7 +161,7 @@ download anything manually.
 ### Option B: Flash a prebuilt release with esptool (CLI)
 
 1. **Download the latest release** from
-   [GitHub Releases](https://github.com/9M2PJU/9M2PJU-ESP32-C3-AdBlocker/releases).
+   [GitHub Releases](https://github.com/9M2PJU/ESP32-C3-AdBlocker/releases).
    You need:
    - `full-flash.bin` — everything in one file (bootloader + partitions + firmware
      + blocklist). This is the easiest option.
@@ -216,8 +216,8 @@ You need [PlatformIO](https://platformio.org/) and Python 3.
 
 2. **Clone this repo:**
    ```bash
-   git clone https://github.com/9M2PJU/9M2PJU-ESP32-C3-AdBlocker.git
-   cd 9M2PJU-ESP32-C3-AdBlocker
+   git clone https://github.com/9M2PJU/ESP32-C3-AdBlocker.git
+   cd ESP32-C3-AdBlocker
    ```
 
 3. **(Optional) set WiFi creds via secrets.h** — or skip and use the captive

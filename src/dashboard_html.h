@@ -76,7 +76,7 @@ details[open] summary{border-bottom:1px solid #30363d}
 <div class=detail-body>
 <h2 style=margin-top:0>FIRMWARE &mdash; OTA UPDATE</h2>
 <form id=fwf style=margin-bottom:6px><input type=file id=fwb accept=.bin><button>Flash firmware</button> <span id=fwmsg style=color:#8b949e></span></form>
-<div style="color:#8b949e;font-size:12px;margin-bottom:18px">select a <code>firmware.bin</code> built from <a href="https://github.com/9M2PJU/9M2PJU-ESP32-C3-AdBlocker" target="_blank" style=color:#58a6ff>source</a> for your board &mdash; device verifies it and reboots into it</div>
+<div style="color:#8b949e;font-size:12px;margin-bottom:18px">select a <code>firmware.bin</code> built from <a href="https://github.com/9M2PJU/ESP32-C3-AdBlocker" target="_blank" style=color:#58a6ff>source</a> for your board &mdash; device verifies it and reboots into it</div>
 <h2>FACTORY RESET</h2>
 <div style=margin-bottom:6px"><input id=rstconfirm placeholder="Type RESET" size=12>
 <button onclick=factoryReset()>Erase all settings</button> <span id=rstmsg style=color:#8b949e></span></div>
