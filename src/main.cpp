@@ -45,7 +45,8 @@
 #include "dashboard_html.h"
 
 // ---- config ----
-static const IPAddress UPSTREAM(9, 9, 9, 9);
+static const IPAddress DEFAULT_UPSTREAM(9, 9, 9, 9);
+IPAddress upstreamDns = DEFAULT_UPSTREAM;
 static const uint16_t DNS_PORT = 53;
 static const uint16_t DHCP_PORT = 67;
 static const char* BLOCKLIST_PATH = "/blocklist.bin";
@@ -59,7 +60,7 @@ static const int MAX_BAN = 32;
 static const int MAX_DHCP_LEASES = 32;
 static const uint32_t UPSTREAM_TIMEOUT_MS = 2000;
 static const uint32_t REMOTE_FETCH_IDLE_MS = 3000;  // only fetch when DNS idle this long
-static const char* DASHBOARD_ETAG = "c3adb-v2";
+static const char* DASHBOARD_ETAG = "c3adb-v3";
 
 // ---- logging ----
 #ifdef NDEBUG
@@ -78,6 +79,7 @@ uint32_t updateIntervalH = 24, lastCheckMs = 0;
 static uint32_t lastDnsActivityMs = 0;
 bool dhcpEnabled = false;
 static void saveDhcpCfg();
+static void saveDnsCfg();
 static void saveWifiCfg(const String& ssid, const String& pass);
 static bool fetchBlocklist(String url);
 
@@ -411,7 +413,7 @@ static void handleDns() {
     pending[slot].sentMs = millis();
     pending[slot].active = true;
     pendingCount++;
-    upstream.beginPacket(UPSTREAM, 53);
+    upstream.beginPacket(upstreamDns, 53);
     upstream.write(dnsBuf, qlen);
     upstream.endPacket();
     totalAllowed++;
@@ -427,7 +429,7 @@ static uint8_t tcpBuf[DNS_BUF_SIZE];
 static int forwardUpstreamSync(uint8_t* pkt, int qlen) {
   uint16_t origID = (pkt[0] << 8) | pkt[1];
   pkt[0] = 0xFF; pkt[1] = 0xFE;  // use fixed ID to avoid collision with UDP slots 0-31
-  tcpUpstream.beginPacket(UPSTREAM, 53);
+  tcpUpstream.beginPacket(upstreamDns, 53);
   tcpUpstream.write(pkt, qlen);
   tcpUpstream.endPacket();
   pkt[0] = (origID >> 8) & 0xFF; pkt[1] = origID & 0xFF;  // restore for blocked path
@@ -706,6 +708,7 @@ static void handleStats() {
              ",\"bloom\":\"" + jesc(bloomStr) + "\",\"pending\":" + pendingCount +
              ",\"dhcp\":" + (dhcpEnabled ? "true" : "false") +
              ",\"auth\":" + (authEnabled ? "true" : "false") +
+             ",\"upstream\":\"" + upstreamDns.toString() + "\"" +
              ",\"wifi\":\"" + jesc(WiFi.SSID()) + "\"" +
              ",\"token\":\"" + jesc(authToken) + "\"" +
              ",\"upurl\":\"" + jesc(updateUrl) + "\",\"upiv\":" + updateIntervalH +
@@ -766,6 +769,23 @@ static void handleDhcpToggle() {
     dhcpSock.stop();
     web.send(200, "text/plain", "DHCP disabled");
   }
+}
+
+static void handleSetUpstream() {
+  if (!checkAuth()) { requireAuth(); return; }
+  if (!checkToken()) { web.send(403, "text/plain", "bad token"); return; }
+  String dnsStr = web.arg("dns");
+  if (dnsStr.length() == 0) dnsStr = web.arg("upstream");
+  dnsStr.trim();
+  IPAddress ip;
+  if (!ip.fromString(dnsStr) || ip == IPAddress(0, 0, 0, 0) || ip == IPAddress(255, 255, 255, 255)) {
+    web.send(400, "text/plain", "invalid IP address");
+    return;
+  }
+  upstreamDns = ip;
+  saveDnsCfg();
+  LOG("[cfg] upstream DNS updated: %s\n", upstreamDns.toString().c_str());
+  web.send(200, "text/plain", "upstream DNS updated to " + upstreamDns.toString());
 }
 
 static void handleSetWifi() {
@@ -839,6 +859,7 @@ static void handleFactoryReset() {
   LittleFS.remove("/banned.txt");
   LittleFS.remove("/update.cfg");
   LittleFS.remove("/dhcp.cfg");
+  LittleFS.remove("/dns.cfg");
   LittleFS.remove("/blocklist.bin");
   LittleFS.remove("/blocklist.new");
   web.send(200, "text/plain", "factory reset done — rebooting...");
@@ -1139,6 +1160,25 @@ static void saveDhcpCfg() {
   f.close();
 }
 
+// ---- DNS config persistence ----
+static void loadDnsCfg() {
+  File f = LittleFS.open("/dns.cfg", "r");
+  if (!f) return;
+  String s = f.readStringUntil('\n');
+  s.trim();
+  IPAddress ip;
+  if (ip.fromString(s) && ip != IPAddress(0, 0, 0, 0) && ip != IPAddress(255, 255, 255, 255)) {
+    upstreamDns = ip;
+  }
+  f.close();
+}
+static void saveDnsCfg() {
+  File f = LittleFS.open("/dns.cfg", "w");
+  if (!f) return;
+  f.println(upstreamDns.toString());
+  f.close();
+}
+
 // ---- setup / loop ----
 void setup() {
   Serial.begin(115200);
@@ -1152,9 +1192,11 @@ void setup() {
   loadBanned();
   loadUpdateCfg();
   loadDhcpCfg();
+  loadDnsCfg();
   reopenBlocklist();
-  LOG("[cfg] custom:%d banned:%d auth:%s\n", numCustom, numBanned, authPassword.c_str());
+  LOG("[cfg] custom:%d banned:%d auth:%s upstream:%s\n", numCustom, numBanned, authPassword.c_str(), upstreamDns.toString().c_str());
   LOGN("[cfg] dashboard password: " + authPassword);
+  LOGN("[cfg] upstream DNS: " + upstreamDns.toString());
 
   if (!connectWiFi()) {
     runCaptivePortal();  // blocks forever (reboots on save)
@@ -1192,6 +1234,8 @@ void setup() {
     saveUpdateCfg();
     web.send(200, "text/plain", "ok");
   });
+  web.on("/setupstream", handleSetUpstream);
+  web.on("/setdns", handleSetUpstream);
   web.on("/dhcp", handleDhcpToggle);
   web.on("/setwifi", handleSetWifi);
   web.on("/setpassword", handleSetPassword);

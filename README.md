@@ -325,6 +325,7 @@ The dashboard at **http://c3adblock.local** does it all:
   pio run -t upload --upload-port c3adblock.local --upload-protocol espota
   ```
 - **WiFi** — change the WiFi network from the dashboard (no reflash needed).
+- **Upstream DNS** — configure the upstream DNS resolver directly from the dashboard under *Network → Upstream DNS* (defaults to Quad9 `9.9.9.9`, with presets for Quad9, Cloudflare `1.1.1.1`, Google `8.8.8.8`, or custom resolver).
 - **DHCP** — optionally enable the built-in DHCP server so the C3 hands itself out
   as the DNS server. Disable your router's DHCP first, then toggle this on.
 

@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.6.0] - 2026-10-14
+
+### Added
+- **Dynamic upstream DNS configuration** — replaced hardcoded `9.9.9.9` with runtime-configurable resolver.
+  - New endpoints: `POST /setupstream` and `POST /setdns` (requires Basic Auth if enabled + CSRF token, validates IPv4 address).
+  - Config persisted to LittleFS in `/dns.cfg` across reboots.
+  - Current upstream DNS reported in `/stats.json` (`upstream` field).
+  - Dashboard UI updated under **Network → UPSTREAM DNS** showing current upstream resolver, text field to set any custom DNS server, and quick preset buttons for Quad9 (`9.9.9.9`), Cloudflare (`1.1.1.1`), and Google (`8.8.8.8`).
+  - Upstream DNS status card added to dashboard header cards.
+  - Factory reset updated to erase `/dns.cfg` and revert to default Quad9 (`9.9.9.9`).
+  - Dashboard ETag bumped to `c3adb-v3` to invalidate client browser caches.
+
+### Files Changed
+- `src/main.cpp` — Defined `DEFAULT_UPSTREAM` and mutable `upstreamDns`; added `/dns.cfg` load/save persistence; added `handleSetUpstream()` endpoint; updated UDP and TCP forwarders; updated `/stats.json`, factory reset, and boot logs.
+- `src/dashboard_html.h` — Added upstream DNS UI and presets in Network section; added DNS card in header; added `saveUpstream()` and `setUpstreamPreset()` JavaScript handlers; updated factory reset description.
+- `README.md` — Documented dashboard upstream DNS configuration under OTA updates section.
+
+### Testing
+- Verified: `tools/test_build_blocklist.py` passed (33 passed, 0 failed).
+- Verified: HTML/JS structure and element IDs (`updns`, `udns`, `udnsmsg`) parsed cleanly via HTML parser.
+- Verified: C++ variable references, route bindings (`/setupstream`, `/setdns`), packet forwarding calls, and LittleFS file operations are consistent.
+
+---
+
 ## [1.5.0] - 2026-07-25
 
 ### Changed

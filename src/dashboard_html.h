@@ -50,7 +50,16 @@ details[open] summary{border-bottom:1px solid #30363d}
 <details open>
 <summary>Network</summary>
 <div class=detail-body>
-<h2 style=margin-top:0>WIFI NETWORK</h2>
+<h2 style=margin-top:0>UPSTREAM DNS</h2>
+<div style=margin-bottom:6px>Current: <span id=updns style=color:#3fb950></span></div>
+<div style=margin-bottom:6px><input id=udns placeholder="9.9.9.9" size=20>
+<button onclick=saveUpstream()>Save DNS</button>
+<button type=button onclick="setUpstreamPreset('9.9.9.9')">Quad9</button>
+<button type=button onclick="setUpstreamPreset('1.1.1.1')">Cloudflare</button>
+<button type=button onclick="setUpstreamPreset('8.8.8.8')">Google</button>
+<span id=udnsmsg style=color:#8b949e;margin-left:6px></span></div>
+<div style="color:#8b949e;font-size:12px;margin-bottom:18px">non-blocked queries forward here &mdash; custom DNS or public resolver</div>
+<h2>WIFI NETWORK</h2>
 <div style=margin-bottom:6px>Current: <span id=wifi style=color:#3fb950></span></div>
 <div style=margin-bottom:18px><input id=wssid placeholder="New SSID" size=20> <input id=wpass type=password placeholder="New password" size=20>
 <button onclick=saveWifi()>Change WiFi</button> <span id=wmsg style=color:#8b949e></span></div>
@@ -78,9 +87,9 @@ details[open] summary{border-bottom:1px solid #30363d}
 <form id=fwf style=margin-bottom:6px><input type=file id=fwb accept=.bin><button>Flash firmware</button> <span id=fwmsg style=color:#8b949e></span></form>
 <div style="color:#8b949e;font-size:12px;margin-bottom:18px">select a <code>firmware.bin</code> built from <a href="https://github.com/engkon6/ESP32-C3-AdBlocker" target="_blank" style=color:#58a6ff>source</a> for your board &mdash; device verifies it and reboots into it</div>
 <h2>FACTORY RESET</h2>
-<div style=margin-bottom:6px"><input id=rstconfirm placeholder="Type RESET" size=12>
+<div style=margin-bottom:6px><input id=rstconfirm placeholder="Type RESET" size=12>
 <button onclick=factoryReset()>Erase all settings</button> <span id=rstmsg style=color:#8b949e></span></div>
-<div style="color:#f85149;font-size:12px">erases WiFi, password, custom domains, bans, blocklist, and update config &mdash; device reboots into setup mode</div>
+<div style="color:#f85149;font-size:12px">erases WiFi, password, custom domains, bans, blocklist, update, and upstream DNS config &mdash; device reboots into setup mode</div>
 </div></details>
 
 </div><script>
@@ -92,6 +101,7 @@ T=s.token||'';
 host.textContent='@ '+s.ip;
 sys.innerHTML=[['Total blocked',fmt(s.blocked),'b'],['Total allowed',fmt(s.allowed),'a'],['Blocklist',fmt(s.domains)+' domains',''],
 ['Bloom',s.bloom||'off',''],['Pending',s.pending||0,''],['Clients',s.clients.length,''],
+['DNS Upstream',s.upstream||'9.9.9.9',''],
 ['WiFi',s.rssi+' dBm',''],['Temp',s.temp+' C',''],['Free RAM',Math.round(s.heap/1024)+' KB',''],['Uptime',s.uptime,'']]
 .map(c=>`<div class=card><div class="v ${c[2]}">${c[1]}</div><div class=l>${c[0]}</div></div>`).join('');
 ct.tBodies[0].innerHTML=s.clients.sort((a,b)=>(b.blocked+b.allowed)-(a.blocked+a.allowed)).map(c=>
@@ -102,11 +112,16 @@ cl.tBodies[0].innerHTML=s.custom.map(d=>`<tr><td>${d}</td><td style=text-align:r
 if(document.activeElement!=uurl)uurl.value=s.upurl||'';
 if(document.activeElement!=uiv)uiv.value=s.upiv||24;
 ustat.textContent=s.upstat||'—';
+updns.textContent=s.upstream||'9.9.9.9';
+if(document.activeElement!=udns)udns.value=s.upstream||'';
 dhcpst.textContent=s.dhcp?'ON':'OFF';
 dhcpst.style.color=s.dhcp?'#3fb950':'#8b949e';
 authst.textContent=s.auth?'ENABLED':'DISABLED';
 authst.style.color=s.auth?'#3fb950':'#f85149';
 wifi.textContent=s.wifi||'—';}
+function setUpstreamPreset(ip){udns.value=ip;saveUpstream()}
+function saveUpstream(){let d=udns.value.trim();if(!d){udnsmsg.textContent='enter DNS IP';return}
+udnsmsg.textContent='saving...';fetch(mut('/setupstream?dns='+encodeURIComponent(d))).then(r=>r.text()).then(t=>{udnsmsg.textContent=t;load()})}
 function addDom(){let d=dom.value.trim();if(d){fetch(mut('/addblock?d='+encodeURIComponent(d))).then(()=>{dom.value='';load()})}}
 function saveUpd(){fetch(mut('/setupdate?u='+encodeURIComponent(uurl.value.trim())+'&h='+(parseInt(uiv.value)||24))).then(load)}
 function fetchNow(){ustat.textContent='fetching...';fetch(mut('/fetchnow')).then(r=>r.text()).then(t=>{ustat.textContent=t;load()})}
